@@ -3,14 +3,14 @@ package deque
 import "testing"
 
 func TestEmpty(t *testing.T) {
-	var q Deque
+	var q ValueTypeDeque
 	if q.Len() != 0 {
 		t.Error("q.Len() =", q.Len(), "expect 0")
 	}
 }
 
 func TestFrontBack(t *testing.T) {
-	var q Deque
+	var q ValueTypeDeque
 	q.PushBack("foo")
 	q.PushBack("bar")
 	q.PushBack("baz")
@@ -43,7 +43,7 @@ func TestFrontBack(t *testing.T) {
 }
 
 func TestGrowShrinkBack(t *testing.T) {
-	var q Deque
+	var q ValueTypeDeque
 	size := minCapacity * 2
 
 	for i := 0; i < size; i++ {
@@ -73,7 +73,7 @@ func TestGrowShrinkBack(t *testing.T) {
 }
 
 func TestGrowShrinkFront(t *testing.T) {
-	var q Deque
+	var q ValueTypeDeque
 	size := minCapacity * 2
 
 	for i := 0; i < size; i++ {
@@ -103,7 +103,7 @@ func TestGrowShrinkFront(t *testing.T) {
 }
 
 func TestSimple(t *testing.T) {
-	var q Deque
+	var q ValueTypeDeque
 
 	for i := 0; i < minCapacity; i++ {
 		q.PushBack(i)
@@ -131,7 +131,7 @@ func TestSimple(t *testing.T) {
 }
 
 func TestBufferWrap(t *testing.T) {
-	var q Deque
+	var q ValueTypeDeque
 
 	for i := 0; i < minCapacity; i++ {
 		q.PushBack(i)
@@ -151,7 +151,7 @@ func TestBufferWrap(t *testing.T) {
 }
 
 func TestBufferWrapReverse(t *testing.T) {
-	var q Deque
+	var q ValueTypeDeque
 
 	for i := 0; i < minCapacity; i++ {
 		q.PushFront(i)
@@ -170,7 +170,7 @@ func TestBufferWrapReverse(t *testing.T) {
 }
 
 func TestLen(t *testing.T) {
-	var q Deque
+	var q ValueTypeDeque
 
 	if q.Len() != 0 {
 		t.Error("empty queue length not 0")
@@ -191,7 +191,7 @@ func TestLen(t *testing.T) {
 }
 
 func TestBack(t *testing.T) {
-	var q Deque
+	var q ValueTypeDeque
 
 	for i := 0; i < minCapacity+5; i++ {
 		q.PushBack(i)
@@ -202,7 +202,7 @@ func TestBack(t *testing.T) {
 }
 
 func checkRotate(t *testing.T, size int) {
-	var q Deque
+	var q ValueTypeDeque
 	for i := 0; i < size; i++ {
 		q.PushBack(i)
 	}
@@ -236,7 +236,7 @@ func TestRotate(t *testing.T) {
 	checkRotate(t, minCapacity)
 	checkRotate(t, minCapacity+minCapacity/2)
 
-	var q Deque
+	var q ValueTypeDeque
 	for i := 0; i < 10; i++ {
 		q.PushBack(i)
 	}
@@ -261,7 +261,7 @@ func TestRotate(t *testing.T) {
 }
 
 func TestAt(t *testing.T) {
-	var q Deque
+	var q ValueTypeDeque
 
 	for i := 0; i < 1000; i++ {
 		q.PushBack(i)
@@ -283,7 +283,7 @@ func TestAt(t *testing.T) {
 }
 
 func TestClear(t *testing.T) {
-	var q Deque
+	var q ValueTypeDeque
 
 	for i := 0; i < 100; i++ {
 		q.PushBack(i)
@@ -310,7 +310,7 @@ func TestClear(t *testing.T) {
 }
 
 func TestInsert(t *testing.T) {
-	q := new(Deque)
+	q := new(ValueTypeDeque)
 	for _, x := range "ABCDEFG" {
 		q.PushBack(x)
 	}
@@ -342,7 +342,7 @@ func TestInsert(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	q := new(Deque)
+	q := new(ValueTypeDeque)
 	for _, x := range "ABCDEFG" {
 		q.PushBack(x)
 	}
@@ -379,7 +379,7 @@ func TestRemove(t *testing.T) {
 
 func TestFrontBackOutOfRangePanics(t *testing.T) {
 	const msg = "should panic when peeking empty queue"
-	var q Deque
+	var q ValueTypeDeque
 	assertPanics(t, msg, func() {
 		q.Front()
 	})
@@ -399,7 +399,7 @@ func TestFrontBackOutOfRangePanics(t *testing.T) {
 }
 
 func TestPopFrontOutOfRangePanics(t *testing.T) {
-	var q Deque
+	var q ValueTypeDeque
 
 	assertPanics(t, "should panic when removing empty queue", func() {
 		q.PopFront()
@@ -414,7 +414,7 @@ func TestPopFrontOutOfRangePanics(t *testing.T) {
 }
 
 func TestPopBackOutOfRangePanics(t *testing.T) {
-	var q Deque
+	var q ValueTypeDeque
 
 	assertPanics(t, "should panic when removing empty queue", func() {
 		q.PopBack()
@@ -429,7 +429,7 @@ func TestPopBackOutOfRangePanics(t *testing.T) {
 }
 
 func TestAtOutOfRangePanics(t *testing.T) {
-	var q Deque
+	var q ValueTypeDeque
 
 	q.PushBack(1)
 	q.PushBack(2)
@@ -445,7 +445,7 @@ func TestAtOutOfRangePanics(t *testing.T) {
 }
 
 func TestInsertOutOfRangePanics(t *testing.T) {
-	q := new(Deque)
+	q := new(ValueTypeDeque)
 
 	assertPanics(t, "should panic when inserting out of range", func() {
 		insert(q, 1, "X")
@@ -463,7 +463,7 @@ func TestInsertOutOfRangePanics(t *testing.T) {
 }
 
 func TestRemoveOutOfRangePanics(t *testing.T) {
-	q := new(Deque)
+	q := new(ValueTypeDeque)
 
 	assertPanics(t, "should panic when removing from empty queue", func() {
 		remove(q, 0)
@@ -491,21 +491,21 @@ func assertPanics(t *testing.T, name string, f func()) {
 }
 
 func BenchmarkPushFront(b *testing.B) {
-	var q Deque
+	var q ValueTypeDeque
 	for i := 0; i < b.N; i++ {
 		q.PushFront(i)
 	}
 }
 
 func BenchmarkPushBack(b *testing.B) {
-	var q Deque
+	var q ValueTypeDeque
 	for i := 0; i < b.N; i++ {
 		q.PushBack(i)
 	}
 }
 
 func BenchmarkSerial(b *testing.B) {
-	var q Deque
+	var q ValueTypeDeque
 	for i := 0; i < b.N; i++ {
 		q.PushBack(i)
 	}
@@ -515,7 +515,7 @@ func BenchmarkSerial(b *testing.B) {
 }
 
 func BenchmarkSerialReverse(b *testing.B) {
-	var q Deque
+	var q ValueTypeDeque
 	for i := 0; i < b.N; i++ {
 		q.PushFront(i)
 	}
@@ -525,7 +525,7 @@ func BenchmarkSerialReverse(b *testing.B) {
 }
 
 func BenchmarkRotate(b *testing.B) {
-	q := new(Deque)
+	q := new(ValueTypeDeque)
 	for i := 0; i < b.N; i++ {
 		q.PushBack(i)
 	}
@@ -537,7 +537,7 @@ func BenchmarkRotate(b *testing.B) {
 }
 
 func BenchmarkInsert(b *testing.B) {
-	q := new(Deque)
+	q := new(ValueTypeDeque)
 	for i := 0; i < b.N; i++ {
 		q.PushBack(i)
 	}
@@ -548,7 +548,7 @@ func BenchmarkInsert(b *testing.B) {
 }
 
 func BenchmarkRemove(b *testing.B) {
-	q := new(Deque)
+	q := new(ValueTypeDeque)
 	for i := 0; i < b.N; i++ {
 		q.PushBack(i)
 	}
@@ -564,7 +564,7 @@ func BenchmarkRemove(b *testing.B) {
 // linear in the lesser of the distances between i and either of the ends of
 // the queue.  Accepts only non-negative index values, and panics if index is
 // out of range.
-func insert(q *Deque, i int, elem interface{}) {
+func insert(q *ValueTypeDeque, i int, elem ValueType) {
 	if i < 0 || i > q.Len() {
 		panic("deque: Insert() called with index out of range")
 	}
@@ -593,7 +593,7 @@ func insert(q *Deque, i int, elem interface{}) {
 // the same as PopBack().  Complexity is constant plus linear in the lesser of
 // the distances between i and either of the ends of the queue.  Accepts only
 // non-negative index values, and panics if index is out of range.
-func remove(q *Deque, i int) interface{} {
+func remove(q *ValueTypeDeque, i int) ValueType {
 	if i < 0 || i >= q.Len() {
 		panic("deque: Remove() called with index out of range")
 	}

@@ -1,73 +1,127 @@
-# deque
+# genny-deque
 
-[![Build Status](https://travis-ci.org/gammazero/deque.svg)](https://travis-ci.org/gammazero/deque)
-[![Go Report Card](https://goreportcard.com/badge/github.com/gammazero/deque)](https://goreportcard.com/report/github.com/gammazero/deque)
-[![codecov](https://codecov.io/gh/gammazero/deque/branch/master/graph/badge.svg)](https://codecov.io/gh/gammazero/deque)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+This repository contains a generics-enabled version of
+[gammazero/deque][gammazero/deque], an extremely fast ring-buffer deque
+([double-ended queue][wikipedia-deque]) implementation.
 
-Extremely fast ring-buffer deque ([double-ended queue](https://en.wikipedia.org/wiki/Double-ended_queue)) implementation.
+By using [cheekybits/genny][genny], concrete deque implementations for most data
+types can be generated. The generated implementation uses the concrete data type
+in all method signatures as well as for the underlying storage (a slice:
+`[]YourType`). Static (compile-time) type-safety avoids panics at runtime and
+leads to simpler calling code as well as editor typeahead support. More compiler
+optimisations can be applied, improving performance and efficiency.
 
-[![GoDoc](https://godoc.org/github.com/gammazero/deque?status.svg)](https://godoc.org/github.com/gammazero/deque)
+[genny]: https://github.com/cheekybits/genny
+[gammazero/deque]: https://github.com/gammazero/deque
+[wikipedia-deque]: https://en.wikipedia.org/wiki/Double-ended_queue
 
-For a pictorial description, see the [Deque diagram](https://github.com/gammazero/deque/wiki)
+## Generating Deque Implementations
 
-## Installation
+**Prerequisites:**
 
-```
-$ go get github.com/gammazero/deque
-```
+ 1. [cheekybits/genny][genny] is installed and the `genny` binary is available
+    in the PATH.
 
-## Deque data structure
+    ```bash
+    go get github.com/cheekybits/genny
+    ```
+ 2. This genny-deque repository has been cloned to a `genny-deque`
+    sub-directory.
 
-Deque generalizes a queue and a stack, to efficiently add and remove items at either end with O(1) performance.  [Queue](https://en.wikipedia.org/wiki/Queue_(abstract_data_type)) (FIFO) operations are supported using `PushBack()` and `PopFront()`.  [Stack](https://en.wikipedia.org/wiki/Stack_(abstract_data_type)) (LIFO) operations are supported using `PushBack()` and `PopBack()`.
+    ```bash
+    git clone https://github.com/pskopnik/genny-deque.git
+    ```
 
-## Ring-buffer Performance
+All the following commands generate a deque implementation which stores elements
+of type `MyJobType`:
 
-This deque implementation is optimized for CPU and GC performance.  The circular buffer automatically re-sizes by powers of two, growing when additional capacity is needed and shrinking when only a quarter of the capacity is used, and uses bitwise arithmetic for all calculations.  Since growth is by powers of two, adding elements will only cause O(log n) allocations.
-
-The ring-buffer implementation significantly improves memory and time performance with fewer GC pauses, compared to implementations based on slices and linked lists.  By wrapping around the buffer, previously used space is reused, making allocation unnecessary until all buffer capacity is used.
-
-For maximum speed, this deque implementation leaves concurrency safety up to the application to provide, however the application chooses, if needed at all.
-
-## Reading Empty Deque
-
-Since it is OK for the deque to contain a nil value, it is necessary to either panic or return a second boolean value to indicate the deque is empty, when reading or removing an element.  This deque panics when reading from an empty deque.  This is a run-time check to help catch programming errors, which may be missed if a second return value is ignored.  Simply check Deque.Len() before reading from the deque.
-
-## Example
-
-```go
-package main
-
-import (
-    "fmt"
-    "github.com/gammazero/deque"
-)
-
-func main() {
-    var q deque.Deque
-    q.PushBack("foo")
-    q.PushBack("bar")
-    q.PushBack("baz")
-
-    fmt.Println(q.Len())   // Prints: 3
-    fmt.Println(q.Front()) // Prints: foo
-    fmt.Println(q.Back())  // Prints: baz
-
-    q.PopFront() // remove "foo"
-    q.PopBack()  // remove "baz"
-
-    q.PushFront("hello")
-    q.PushBack("world")
-
-    // Consume deque and print elements.
-    for q.Len() != 0 {
-        fmt.Println(q.PopFront())
-    }
-}
+```bash
+# Print implementation to stdout
+genny -in=genny-deque/deque.go gen "ValueType=MyJobType"
+# Write implementation to file
+genny -in=genny-deque/deque.go -out=myjobtypedeque_gen.go gen "ValueType=MyJobType"
+# Customise package
+genny -in=genny-deque/deque.go -out=myjobtypedeque_gen.go -pkg=mypkgname gen "ValueType=MyJobType"
 ```
 
-## Uses
+## Integrating into a Project's Repository
 
-Deque can be used as both a:
-- [Queue](https://en.wikipedia.org/wiki/Queue_(abstract_data_type)) using `PushBack` and `PopFront`
-- [Stack](https://en.wikipedia.org/wiki/Stack_(abstract_data_type)) using `PushBack` and `PopBack`
+genny-deque can be integrated cleanly into a project by leveraging the [`go
+generate`][go-generate] mechanism. The mechanism allows generating deque
+implementations for custom types using standard tooling, thus providing a clear
+interface for developers. It also makes the generating process more easily
+repeatable.
+
+To achieve repeatability, the generic genny-deque code must be included in the
+project's repository at a fixed version. The recommended way to achieve this is
+by adding a git submodule.
+
+```bash
+# Init is only required to be run once for a repository
+git submodule init
+# Clone genny-deque and add as a submodule to the containing repository
+git submodule add https://github.com/pskopnik/genny-deque.git
+```
+
+To update the generic genny-deque code, the submodule
+
+```bash
+# Change into the submodule repository
+cd genny-deque
+# Pull the latest commits
+git pull
+# Change back into the containing repository
+cd ..
+# Add the change (new commit) to the git index
+git add genny-deque
+```
+
+Whenever changes to the submodules have been pushed, other contributors must
+update their local submodules after pulling. See the [Pro Git Book: Submodules
+section][git-submodules] for more information on how to work with submodules.
+
+```bash
+git submodule update
+```
+
+To integrate with `go generate`, the generating command has to be included in a
+Go source file using a special comment. The comment can be added to any Go file
+in the module. Recommended is either the file containing the custom type to be
+stored by the deque or a file solely containing the comment. For more
+information on `go generate` see the related [blog post][go-generate].
+
+For example, to create a deque implementation storing elements of type
+`MyJobType`, the following file `myjobtypedeque.go` can be created:
+
+```golang
+package mypkgname
+
+//go:generate genny -in=genny-deque/deque.go -out=myjobtypedeque_gen.go -pkg=mypkgname gen "ValueType=MyJobType"
+```
+
+To generate the deque implementation, run `go generate`:
+
+```bash
+go generate
+```
+
+[go-generate]: https://blog.golang.org/generate
+[git-submodules]: https://git-scm.com/book/en/v2/Git-Tools-Submodules
+
+## License
+
+genny-deque is licensed under the MIT License (see `LICENSE`).
+[gammazero/deque][gammazero/deque] is licensed under the MIT License as well
+(see `LICENSE.deque`).
+
+## Contributing
+
+You are welcome to contribute to genny-deque through its [GitHub][genny-deque]
+repository, either by creating an issue, or by proposing code changes through
+the Pull Request system.
+
+Changes to the deque implementation should be proposed on the
+[gammazero/deque][gammazero/deque] repository. Feel free to also create an issue
+in this repository for tracking the status of the contribution.
+
+[genny-deque]: https://github.com/pskopnik/genny-deque

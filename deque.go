@@ -1,26 +1,37 @@
 package deque
 
+// This file is a modified version of https://github.com/gammazero/deque
+// Copyright (c) 2018 Andrew J. Gillis. Licensed under the MIT License.
+
+import (
+	"github.com/cheekybits/genny/generic"
+)
+
+type ValueType generic.Type
+
+var nilValueType ValueType
+
 // minCapacity is the smallest capacity that deque may have.
 // Must be power of 2 for bitwise modulus: x % n == x & (n - 1).
 const minCapacity = 16
 
-// Deque represents a single instance of the deque data structure.
-type Deque struct {
-	buf   []interface{}
+// ValueTypeDeque represents a single instance of the deque data structure.
+type ValueTypeDeque struct {
+	buf   []ValueType
 	head  int
 	tail  int
 	count int
 }
 
 // Len returns the number of elements currently stored in the queue.
-func (q *Deque) Len() int {
+func (q *ValueTypeDeque) Len() int {
 	return q.count
 }
 
 // PushBack appends an element to the back of the queue.  Implements FIFO when
 // elements are removed with PopFront(), and LIFO when elements are removed
 // with PopBack().
-func (q *Deque) PushBack(elem interface{}) {
+func (q *ValueTypeDeque) PushBack(elem ValueType) {
 	q.growIfFull()
 
 	q.buf[q.tail] = elem
@@ -30,7 +41,7 @@ func (q *Deque) PushBack(elem interface{}) {
 }
 
 // PushFront prepends an element to the front of the queue.
-func (q *Deque) PushFront(elem interface{}) {
+func (q *ValueTypeDeque) PushFront(elem ValueType) {
 	q.growIfFull()
 
 	// Calculate new head position.
@@ -42,12 +53,12 @@ func (q *Deque) PushFront(elem interface{}) {
 // PopFront removes and returns the element from the front of the queue.
 // Implements FIFO when used with PushBack().  If the queue is empty, the call
 // panics.
-func (q *Deque) PopFront() interface{} {
+func (q *ValueTypeDeque) PopFront() ValueType {
 	if q.count <= 0 {
 		panic("deque: PopFront() called on empty queue")
 	}
 	ret := q.buf[q.head]
-	q.buf[q.head] = nil
+	q.buf[q.head] = nilValueType
 	// Calculate new head position.
 	q.head = q.next(q.head)
 	q.count--
@@ -59,7 +70,7 @@ func (q *Deque) PopFront() interface{} {
 // PopBack removes and returns the element from the back of the queue.
 // Implements LIFO when used with PushBack().  If the queue is empty, the call
 // panics.
-func (q *Deque) PopBack() interface{} {
+func (q *ValueTypeDeque) PopBack() ValueType {
 	if q.count <= 0 {
 		panic("deque: PopBack() called on empty queue")
 	}
@@ -69,7 +80,7 @@ func (q *Deque) PopBack() interface{} {
 
 	// Remove value at tail.
 	ret := q.buf[q.tail]
-	q.buf[q.tail] = nil
+	q.buf[q.tail] = nilValueType
 	q.count--
 
 	q.shrinkIfExcess()
@@ -79,7 +90,7 @@ func (q *Deque) PopBack() interface{} {
 // Front returns the element at the front of the queue.  This is the element
 // that would be returned by PopFront().  This call panics if the queue is
 // empty.
-func (q *Deque) Front() interface{} {
+func (q *ValueTypeDeque) Front() ValueType {
 	if q.count <= 0 {
 		panic("deque: Front() called when empty")
 	}
@@ -89,7 +100,7 @@ func (q *Deque) Front() interface{} {
 // Back returns the element at the back of the queue.  This is the element
 // that would be returned by PopBack().  This call panics if the queue is
 // empty.
-func (q *Deque) Back() interface{} {
+func (q *ValueTypeDeque) Back() ValueType {
 	if q.count <= 0 {
 		panic("deque: Back() called when empty")
 	}
@@ -102,13 +113,13 @@ func (q *Deque) Back() interface{} {
 // to the last element and is the same as Back().  If the index is invalid, the
 // call panics.
 //
-// The purpose of At is to allow Deque to serve as a more general purpose
+// The purpose of At is to allow ValueTypeDeque to serve as a more general purpose
 // circular buffer, where items are only added to and removed from the ends of
 // the deque, but may be read from any place within the deque.  Consider the
 // case of a fixed-size circular log buffer: A new entry is pushed onto one end
 // and when full the oldest is popped from the other end.  All the log entries
 // in the buffer must be readable without altering the buffer contents.
-func (q *Deque) At(i int) interface{} {
+func (q *ValueTypeDeque) At(i int) ValueType {
 	if i < 0 || i >= q.count {
 		panic("deque: At() called with index out of range")
 	}
@@ -121,11 +132,11 @@ func (q *Deque) At(i int) interface{} {
 // GC during reuse.  The queue will not be resized smaller as long as items are
 // only added.  Only when items are removed is the queue subject to getting
 // resized smaller.
-func (q *Deque) Clear() {
+func (q *ValueTypeDeque) Clear() {
 	// bitwise modulus
 	modBits := len(q.buf) - 1
 	for h := q.head; h != q.tail; h = (h + 1) & modBits {
-		q.buf[h] = nil
+		q.buf[h] = nilValueType
 	}
 	q.head = 0
 	q.tail = 0
@@ -133,9 +144,9 @@ func (q *Deque) Clear() {
 }
 
 // Rotate rotates the deque n steps front-to-back.  If n is negative, rotates
-// back-to-front.  Having Deque provide Rotate() avoids resizing that could
+// back-to-front.  Having ValueTypeDeque provide Rotate() avoids resizing that could
 // happen if implementing rotation using only Pop and Push methods.
-func (q *Deque) Rotate(n int) {
+func (q *ValueTypeDeque) Rotate(n int) {
 	if q.count <= 1 {
 		return
 	}
@@ -162,7 +173,7 @@ func (q *Deque) Rotate(n int) {
 			q.tail = (q.tail - 1) & modBits
 			// Put tail value at head and remove value at tail.
 			q.buf[q.head] = q.buf[q.tail]
-			q.buf[q.tail] = nil
+			q.buf[q.tail] = nilValueType
 		}
 		return
 	}
@@ -171,7 +182,7 @@ func (q *Deque) Rotate(n int) {
 	for ; n > 0; n-- {
 		// Put head value at tail and remove value at head.
 		q.buf[q.tail] = q.buf[q.head]
-		q.buf[q.head] = nil
+		q.buf[q.head] = nilValueType
 		// Calculate new head and tail using bitwise modulus.
 		q.head = (q.head + 1) & modBits
 		q.tail = (q.tail + 1) & modBits
@@ -179,19 +190,19 @@ func (q *Deque) Rotate(n int) {
 }
 
 // prev returns the previous buffer position wrapping around buffer.
-func (q *Deque) prev(i int) int {
+func (q *ValueTypeDeque) prev(i int) int {
 	return (i - 1) & (len(q.buf) - 1) // bitwise modulus
 }
 
 // next returns the next buffer position wrapping around buffer.
-func (q *Deque) next(i int) int {
+func (q *ValueTypeDeque) next(i int) int {
 	return (i + 1) & (len(q.buf) - 1) // bitwise modulus
 }
 
 // growIfFull resizes up if the buffer is full.
-func (q *Deque) growIfFull() {
+func (q *ValueTypeDeque) growIfFull() {
 	if len(q.buf) == 0 {
-		q.buf = make([]interface{}, minCapacity)
+		q.buf = make([]ValueType, minCapacity)
 		return
 	}
 	if q.count == len(q.buf) {
@@ -200,7 +211,7 @@ func (q *Deque) growIfFull() {
 }
 
 // shrinkIfExcess resize down if the buffer 1/4 full.
-func (q *Deque) shrinkIfExcess() {
+func (q *ValueTypeDeque) shrinkIfExcess() {
 	if len(q.buf) > minCapacity && (q.count<<2) == len(q.buf) {
 		q.resize()
 	}
@@ -209,8 +220,8 @@ func (q *Deque) shrinkIfExcess() {
 // resize resizes the deque to fit exactly twice its current contents.  This is
 // used to grow the queue when it is full, and also to shrink it when it is
 // only a quarter full.
-func (q *Deque) resize() {
-	newBuf := make([]interface{}, q.count<<1)
+func (q *ValueTypeDeque) resize() {
+	newBuf := make([]ValueType, q.count<<1)
 	if q.tail > q.head {
 		copy(newBuf, q.buf[q.head:q.tail])
 	} else {
